@@ -36,7 +36,7 @@ main :: proc() {
         if (err != nil) {
             fmt.eprintfln("Error with stdin: {}", err)
         }
-        fmt.println()
         reset_terminal_color()
+        fmt.println()
     }
 }

@@ -26,15 +26,16 @@ main :: proc() {
     if (!term_width_success) {
         term_width = 0
     }
-    if (len(args.files) == 0) {
-    err := paint_files(&painter, args.files[:], term_width)
-    if (err != nil) {
-        fmt.eprintfln("Error with files: {}", err)
-    }
+    if (len(args.files) > 0) {
+        err := paint_files(&painter, args.files[:], term_width)
+        if (err != nil) {
+            fmt.eprintfln("Error with files: {}", err)
+        }
     } else {
         err := paint_fd(&painter, os.stdin, term_width)
         if (err != nil) {
             fmt.eprintfln("Error with stdin: {}", err)
         }
+        reset_terminal_color()
     }
 }

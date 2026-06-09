@@ -70,6 +70,7 @@ paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
     for r in str {
         if (r == '\n' || (terminal_width != 0 && current_distance == terminal_width)) {
             fmt.print(str[offset:offset + current_distance])
+            // fmt.eprintln(str[offset:])
             if (r != '\n' ) { fmt.println() }// i guess it works
             offset += current_distance
             current_distance = 0
@@ -78,17 +79,18 @@ paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
         }
         current_distance += 1
     }
+    if (current_distance != 0) {
+        fmt.print(str[offset:offset + current_distance]) // i forgot to flush leftover string ig lmao :p
+    }
 }
 paint_fd :: proc(painter: ^Painter, file: ^os.File, terminal_width: uint) -> PainterError {
     buffer: [4096]u8 = ---
-    offset: uint = 0
     for {
         read, err := os.read(file, buffer[:])
         if (err != nil) {
             return nil
         }
         str := string(buffer[:read])
-        // fmt.println(str)
         paint_string(painter, str, terminal_width)
     }
     return nil

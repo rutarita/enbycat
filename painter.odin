@@ -7,6 +7,7 @@ Painter :: struct {
     current_color: int,
     thickness: uint,
     current_thickness: uint,
+    distance: uint,
 }
 PainterCreatorError :: enum {
     None,
@@ -26,6 +27,7 @@ create_painter :: proc(args : ArgumentParseResult) -> (Painter, PainterCreatorEr
         painter.colors = default_colors[:]
     }
     painter.thickness = args.thickness
+    painter.distance = 0
     return painter, nil
 }
 
@@ -66,22 +68,26 @@ update_color :: proc(painter: ^Painter) {
 paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
     update_color(painter)
     offset: uint = 0
-    current_distance: uint = 0
+    current_distance: uint = painter.distance
+    string_start: uint = 0
     for r in str {
         if (r == '\n' || (terminal_width != 0 && current_distance == terminal_width)) {
-            fmt.print(str[offset:offset + current_distance])
+            fmt.print(str[offset:string_start + offset])
             // fmt.eprintln(str[offset:])
             if (r != '\n' ) { fmt.println() }// i guess it works
-            offset += current_distance
+            offset += string_start
             current_distance = 0
+            string_start = 0
             advance_painter(painter)
             update_color(painter)
         }
         current_distance += 1
+        string_start += 1
     }
     if (current_distance != 0) {
-        fmt.print(str[offset:offset + current_distance]) // i forgot to flush leftover string ig lmao :p
+        fmt.print(str[offset:string_start + offset]) // i forgot to flush leftover string ig lmao :p
     }
+    painter.distance = current_distance
 }
 paint_fd :: proc(painter: ^Painter, file: ^os.File, terminal_width: uint) -> PainterError {
     buffer: [4096]u8 = ---

@@ -99,9 +99,10 @@ paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
             current_distance = 0
             string_start = 0
             painter.current_line += 1
-            if (r != '\n' ) { fmt.println() }// i guess it works
-            advance_painter(painter)
-            update_color(painter)
+            if (r != '\n' ) { fmt.println() } else {// i guess it works
+                advance_painter(painter)
+                update_color(painter)
+            }
             if (painter.number) {
                 print_line_number(painter)
                 current_distance += line_number_length

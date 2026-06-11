@@ -80,34 +80,40 @@ print_line_number :: proc(painter: ^Painter) {
     zbuf: [7]u8 = ---
     slice.fill(zbuf[:filler_len], ' ')
     filler_str := transmute(string)zbuf[:filler_len]
-    fmt.printf("\n{}{}  ", filler_str, line_num_str)
+    fmt.printf("{}{}  ", filler_str, line_num_str)
 }
 
 paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
-    update_color(painter)
+    // update_color(painter)
     offset: uint = 0
     current_distance: uint = painter.distance
     string_start: uint = 0
     last_line: uint = 0
     for r in str {
+        current_distance += 1
+        string_start += 1
         if (r == '\n' || (terminal_width != 0 && current_distance == terminal_width)) {
             fmt.print(str[offset:string_start + offset])
             // fmt.eprintln(str[offset:])
             offset += string_start
             current_distance = 0
             string_start = 0
+            painter.current_line += 1
             if (r != '\n' ) { fmt.println() }// i guess it works
             advance_painter(painter)
             update_color(painter)
+            if (painter.number) {
+                print_line_number(painter)
+                current_distance += line_number_length
+            }
         }
-        current_distance += 1
-        string_start += 1
     }
     if (current_distance != 0) {
         fmt.print(str[offset:string_start + offset]) // i forgot to flush leftover string ig lmao :p
     }
     painter.distance = current_distance
 }
+
 paint_fd :: proc(painter: ^Painter, file: ^os.File, terminal_width: uint) -> PainterError {
     buffer: [4096]u8 = ---
     for {
@@ -116,6 +122,11 @@ paint_fd :: proc(painter: ^Painter, file: ^os.File, terminal_width: uint) -> Pai
             return nil
         }
         str := string(buffer[:read])
+        update_color(painter)
+        if (painter.number) {
+            print_line_number(painter)
+            painter.current_line += 1
+        }
         paint_string(painter, str, terminal_width)
     }
     return nil

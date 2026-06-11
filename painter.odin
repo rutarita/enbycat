@@ -1,13 +1,17 @@
 package main
 import "core:terminal/ansi"
+import "core:slice"
 import "core:fmt"
 import "core:os"
+import "core:strconv"
 Painter :: struct {
     colors: []Color,
     current_color: int,
     thickness: uint,
     current_thickness: uint,
     distance: uint,
+    current_line: uint,
+    number: bool
 }
 PainterCreatorError :: enum {
     None,
@@ -26,8 +30,10 @@ create_painter :: proc(args : ArgumentParseResult) -> (Painter, PainterCreatorEr
     } else {
         painter.colors = default_colors[:]
     }
+    painter.number = args.number
     painter.thickness = args.thickness
     painter.distance = 0
+    painter.current_line = 1
     return painter, nil
 }
 
@@ -64,20 +70,33 @@ update_color :: proc(painter: ^Painter) {
         color_terminal(current_painter_color(painter))
     }
 }
+line_number_length :: 8
+// returns width of a line length string idk.
+// the issue with tab stops is that i can't really predict their length and so i have to use two spaces instead
+print_line_number :: proc(painter: ^Painter) {
+    buf: [6]u8
+    line_num_str := strconv.write_uint(buf[:], cast(u64)painter.current_line, 10)
+    filler_len := 6 - len(line_num_str)
+    zbuf: [7]u8 = ---
+    slice.fill(zbuf[:filler_len], ' ')
+    filler_str := transmute(string)zbuf[:filler_len]
+    fmt.printf("\n{}{}  ", filler_str, line_num_str)
+}
 
 paint_string :: proc(painter: ^Painter, str: string, terminal_width: uint) {
     update_color(painter)
     offset: uint = 0
     current_distance: uint = painter.distance
     string_start: uint = 0
+    last_line: uint = 0
     for r in str {
         if (r == '\n' || (terminal_width != 0 && current_distance == terminal_width)) {
             fmt.print(str[offset:string_start + offset])
             // fmt.eprintln(str[offset:])
-            if (r != '\n' ) { fmt.println() }// i guess it works
             offset += string_start
             current_distance = 0
             string_start = 0
+            if (r != '\n' ) { fmt.println() }// i guess it works
             advance_painter(painter)
             update_color(painter)
         }
